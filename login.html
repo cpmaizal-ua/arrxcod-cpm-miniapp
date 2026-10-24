@@ -1,0 +1,105 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>CPM1 TOOL — Login</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root {
+  --bg: #0a0c12; --card: #12151c; --line: rgba(255,255,255,.08);
+  --text: #e8eef8; --muted: #8b95a8; --accent: #4a9eff; --accent2: #1a4db8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  background: radial-gradient(ellipse at top, #142038 0%, #0a0c12 55%, #05070c 100%);
+  color: var(--text); min-height: 100vh; padding: 20px 16px;
+}
+.wrap { max-width: 420px; margin: 0 auto; min-height: 90vh; display: flex; flex-direction: column; justify-content: center; }
+.brand { text-align: center; font-weight: 800; font-size: 1.35rem; letter-spacing: .02em;
+  background: linear-gradient(90deg, #e8f1ff, #4a9eff, #8ec5ff, #1a4db8); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+.sub { text-align: center; color: var(--muted); font-size: .85rem; margin-bottom: 22px; }
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px 18px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.45);
+}
+.tabs { display: flex; background: #0e1118; border-radius: 999px; padding: 4px; margin-bottom: 16px; }
+.tab { flex: 1; border: 0; background: transparent; color: var(--muted); font-weight: 600; padding: 10px; border-radius: 999px; cursor: pointer; font-size: .9rem; }
+.tab.on { background: linear-gradient(135deg, #8ec5ff, #4a9eff, #1a4db8); color: #fff; }
+.field { margin-bottom: 12px; position: relative; }
+input {
+  width: 100%; background: #0e1118; border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 16px; color: var(--text); font-size: .95rem; outline: none;
+}
+input:focus { border-color: rgba(168,85,247,.55); }
+input::placeholder { color: #6b7280; }
+.eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: 0; color: var(--muted); cursor: pointer; font-size: .9rem; }
+.btn {
+  width: 100%; border: 0; border-radius: 12px; padding: 14px; margin-top: 6px;
+  font-weight: 700; font-size: .95rem; cursor: pointer;
+  background: linear-gradient(135deg, #2f6fed, #1a4db8, #2f6fed); color: #fff;
+  box-shadow: 0 8px 24px rgba(192,38,211,.3);
+}
+.err { color: #8ec5ff; font-size: .82rem; text-align: center; margin-top: 12px; min-height: 1.2em; }
+.hint { color: var(--muted); font-size: .75rem; text-align: center; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">CPM1 TOOL</div>
+  <div class="sub">Sign in with your CPM1 account</div>
+  <div class="card">
+    <div class="tabs">
+      <button type="button" class="tab on" id="tabL">Login</button>
+      <button type="button" class="tab" id="tabR">Register</button>
+    </div>
+    <form id="form">
+      <div class="field"><input type="email" id="email" placeholder="Email" required autocomplete="username"/></div>
+      <div class="field">
+        <input type="password" id="pass" placeholder="Password" required autocomplete="current-password"/>
+        <button type="button" class="eye" id="eye">Show</button>
+      </div>
+      <button type="submit" class="btn" id="go">Login</button>
+      <div class="err" id="err"></div>
+    </form>
+  </div>
+  <p class="hint">Open this Mini App from the Telegram bot · Open App</p>
+</div>
+<script>
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) { try { tg.ready(); tg.expand(); tg.setHeaderColor('#0a0c12'); tg.setBackgroundColor('#0a0c12'); } catch(e){} }
+let mode = 'login';
+document.getElementById('tabL').onclick = () => { mode='login'; document.getElementById('tabL').classList.add('on'); document.getElementById('tabR').classList.remove('on'); document.getElementById('go').textContent='Login'; };
+document.getElementById('tabR').onclick = () => { mode='register'; document.getElementById('tabR').classList.add('on'); document.getElementById('tabL').classList.remove('on'); document.getElementById('go').textContent='Register'; };
+document.getElementById('eye').onclick = () => { const i=document.getElementById('pass'); i.type = i.type==='password'?'text':'password'; };
+function tgUser() {
+  const initData = (tg && tg.initData) || '';
+  let tg_id=null, username='', first_name='', last_name='';
+  if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    const u = tg.initDataUnsafe.user;
+    tg_id = u.id; username = u.username||''; first_name = u.first_name||''; last_name = u.last_name||'';
+  }
+  return { initData, tg_id, username, first_name, last_name };
+}
+document.getElementById('form').onsubmit = async (e) => {
+  e.preventDefault();
+  const err = document.getElementById('err');
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('pass').value;
+  const u = tgUser();
+  if (!u.initData && !u.tg_id) { err.textContent = 'Open from Telegram bot → Open App'; return; }
+  err.textContent = mode==='login' ? 'Signing in…' : 'Creating account…';
+  try {
+    const res = await fetch(mode==='login'?'/api/cpm_login':'/api/cpm_register', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password, ...u })
+    });
+    const data = await res.json();
+    if (data.ok) location.href = '/app';
+    else { let m=data.error||data.message||'Failed'; if(String(m).includes('EMAIL_EXISTS')) m='Email already used — switch to Login'; if(String(m).toLowerCase().includes('load')) m='Profile setup failed — try Login once, or open the game once then Login'; err.textContent=m; }
+  } catch (ex) { err.textContent = String(ex); }
+};
+</script>
+</body>
+</html>

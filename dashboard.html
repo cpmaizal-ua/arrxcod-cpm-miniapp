@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>CPM1 TOOL</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root {
+  --bg:#0a0c12; --card:#12151c; --line:rgba(255,255,255,.08);
+  --text:#e8eef8; --muted:#8b95a8; --purple:#4a9eff; --pink:#2f6fed;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+  background:radial-gradient(ellipse at top,#142038 0%,#0a0c12 50%,#05070c 100%);
+  color:var(--text);min-height:100vh;padding:12px 14px 40px;
+}
+.wrap{max-width:420px;margin:0 auto}
+.top{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;margin-bottom:12px;
+}
+.brand{font-weight:800;background:linear-gradient(90deg,#c0d8ff,#4a9eff,#1a4db8,#8ec5ff);-webkit-background-clip:text;color:transparent}
+.top button{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:6px}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:14px;margin-bottom:12px;
+}
+.profile{display:flex;gap:12px;align-items:center}
+.av{
+  width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#8ec5ff,#4a9eff,#1a4db8,#0f2a66);
+  display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;
+  overflow:hidden;
+}
+.av img{width:100%;height:100%;object-fit:cover}
+.name{font-weight:700;font-size:1.05rem}
+.meta{color:var(--muted);font-size:.8rem;margin-top:2px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.stat{background:#0e1118;border-radius:12px;padding:10px 12px;border:1px solid var(--line)}
+.stat .l{color:var(--muted);font-size:.7rem}
+.stat .v{font-weight:600;font-size:.9rem;margin-top:2px;word-break:break-all}
+.subline{font-size:.82rem;color:var(--muted);margin-top:4px}
+.subline.ok{color:#5eead4}.subline.no{color:#8ec5ff}
+.lock{
+  background:rgba(127,29,29,.35);border:1px solid rgba(248,113,113,.35);
+  color:#a8c8f0;border-radius:12px;padding:10px 12px;font-size:.82rem;margin-bottom:12px;display:none;
+}
+.sec{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 8px}
+.row{
+  display:flex;align-items:center;gap:12px;width:100%;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;margin-bottom:8px;cursor:pointer;text-align:left;color:var(--text);
+  font-size:.9rem;font-weight:500;
+}
+.row:active{opacity:.85}
+.ico{
+  width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.ico svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.locked .row{opacity:.38;pointer-events:none}
+.toast{
+  position:fixed;left:14px;right:14px;bottom:18px;max-width:420px;margin:0 auto;
+  background:#161b26;border:1px solid var(--line);border-radius:12px;padding:12px;
+  font-size:.85rem;text-align:center;display:none;z-index:50;
+}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:40;padding:20px}
+.modal-bg.show{display:flex}
+.modal{background:#12151c;border:1px solid var(--line);border-radius:16px;padding:18px;width:100%;max-width:340px}
+.modal h3{margin-bottom:8px}
+.modal input,.modal select{width:100%;margin:8px 0;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0e1118;color:#fff}
+.modal .btn{width:100%;margin-top:8px;padding:12px;border:0;border-radius:10px;font-weight:700;
+  background:linear-gradient(135deg,#8ec5ff,#4a9eff,#1a4db8,#0f2a66);color:#fff;cursor:pointer}
+.modal .btn.sec{background:#161b26;border:1px solid var(--line);color:var(--text);margin-top:6px}
+.progress{height:6px;background:#161b26;border-radius:99px;overflow:hidden;margin:12px 0}
+.progress i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#c0d8ff,#4a9eff,#1a4db8,#8ec5ff);transition:width .3s}
+
+.prog-modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+.prog-modal.show{display:flex}
+.prog-card{background:#12151c;border:1px solid var(--line);border-radius:18px;padding:22px 18px;width:100%;max-width:320px;text-align:center}
+.prog-card h3{margin:0 0 6px;font-size:1rem;letter-spacing:.04em}
+.prog-pct{font-size:2.4rem;font-weight:800;background:linear-gradient(135deg,#8ec5ff,#2f6fed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:8px 0}
+.prog-bar{height:10px;background:#161b26;border-radius:99px;overflow:hidden;margin:14px 0 10px}
+.prog-bar>i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#2f6fed,#8ec5ff);border-radius:99px;transition:width .25s ease}
+.prog-msg{font-size:.8rem;color:var(--muted);min-height:2.2em}
+.prog-actions{display:flex;gap:8px;margin-top:12px}
+.prog-actions button{flex:1;padding:10px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
+.prog-hide{background:#161b26;color:#e8e8ed;border:1px solid var(--line)!important}
+.prog-mini{position:fixed;left:12px;right:12px;bottom:16px;z-index:55;display:none;background:#12151c;border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+.prog-mini.show{display:block}
+.prog-mini .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.prog-mini .pct{font-weight:800;color:#8ec5ff}
+.prog-mini .eta{font-size:.75rem;color:var(--muted)}
+.prog-mini .bar{height:6px;background:#161b26;border-radius:99px;overflow:hidden;margin-top:8px}
+.prog-mini .bar>i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#2f6fed,#8ec5ff)}
+
+
+.plan-row{background:#0e1118;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.plan-row .title{font-weight:700;margin-bottom:6px}
+.plan-row .prices{display:flex;gap:8px;flex-wrap:wrap}
+.plan-row button{flex:1;min-width:110px;padding:10px;border:0;border-radius:10px;font-weight:700;cursor:pointer;font-size:.85rem}
+.plan-row .btn-stars{background:linear-gradient(135deg,#f59e0b,#eab308);color:#111}
+.plan-row .btn-money{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.pay-info{font-size:.78rem;color:var(--muted);margin-top:10px;line-height:1.45}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">CPM1 TOOL</div>
+    <div>
+      <button type="button" id="btnSub" title="Subscription">SUB</button>
+      <button type="button" id="btnOut" title="Logout">⎋</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="profile">
+      <div class="av" id="av">P</div>
+      <div>
+        <div class="name" id="tgName">—</div>
+        <div class="meta" id="tgUser">@—</div>
+        <div class="meta">ID <span id="tgId">—</span></div>
+        <div class="subline" id="subLine">Subscription —</div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="l">Gmail</div><div class="v" id="cpmEmail">—</div></div>
+      <div class="stat"><div class="l">CPM Name</div><div class="v" id="cpmName">—</div></div>
+      <div class="stat"><div class="l">CPM ID</div><div class="v" id="cpmId">—</div></div>
+      <div class="stat"><div class="l">Money</div><div class="v" id="cpmMoney">—</div></div>
+      <div class="stat"><div class="l">Coins</div><div class="v" id="cpmCoin">—</div></div>
+    </div>
+  </div>
+
+  <div class="lock" id="lock">No subscription — tap SUB, pay GCash, send receipt to the bot.</div>
+
+  <div id="menu">
+    <div class="sec">Account</div>
+    <button class="row" data-a="acc_name"><span class="ico" style="background:#4c1d95"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>Change name</button>
+    <button class="row" data-a="acc_custom_rainbow_name"><span class="ico" style="background:#be185d"><svg viewBox="0 0 24 24"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M8 18a4 4 0 1 1 8 0"/><circle cx="12" cy="18" r="1"/></svg></span>Custom Rainbow Name</button>
+    <button class="row" data-a="acc_id"><span class="ico" style="background:#0f2a66"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h4M7 13h10"/></svg></span>Change ID</button>
+    <button class="row" data-a="acc_custom_rainbow_id"><span class="ico" style="background:#0e7490"><svg viewBox="0 0 24 24"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M8 18a4 4 0 1 1 8 0"/><circle cx="12" cy="18" r="1"/></svg></span>Custom Rainbow ID</button>
+    <button class="row" data-a="acc_email"><span class="ico" style="background:#0e7490"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>Change email</button>
+    <button class="row" data-a="acc_pass"><span class="ico" style="background:#374151"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>Change password</button>
+    <button class="row" data-a="acc_rank"><span class="ico" style="background:#a16207"><svg viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 11l-5 4.5L17.5 22 12 18.5 6.5 22 8 15.5 3 11l6.5-1.5Z"/></svg></span>King rank</button>
+    <button class="row" data-a="acc_refresh"><span class="ico" style="background:#334155"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></span>Refresh account</button>
+
+    <div class="sec">Economy</div>
+    <button class="row" data-a="eco_money"><span class="ico" style="background:#166534"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 10h4.5a2 2 0 1 1 0 4H9"/></svg></span>Money 50M</button>
+    <button class="row" data-a="eco_coin"><span class="ico" style="background:#854d0e"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/></svg></span>Coins 500K</button>
+    <button class="row" data-a="eco_money_c"><span class="ico" style="background:#14532d"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Custom money</button>
+    <button class="row" data-a="eco_coin_c"><span class="ico" style="background:#713f12"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Custom coins</button>
+
+    <div class="sec">Unlocks</div>
+    <button class="row" data-a="unl_w16"><span class="ico" style="background:#7c2d12"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>W16 engine</button>
+    <button class="row" data-a="unl_smoke"><span class="ico" style="background:#4b5563"><svg viewBox="0 0 24 24"><path d="M4 16c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2"/><path d="M4 10c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2"/></svg></span>Smoke</button>
+    <button class="row" data-a="unl_fuel"><span class="ico" style="background:#1a4db8"><svg viewBox="0 0 24 24"><path d="M3 22V8l9-6 9 6v14"/><path d="M9 22V12h6v10"/></svg></span>Max fuel</button>
+    <button class="row" data-a="unl_damage"><span class="ico" style="background:#0f766e"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>No damage</button>
+    <button class="row" data-a="unl_horns"><span class="ico" style="background:#9a3412"><svg viewBox="0 0 24 24"><path d="M9 18V6l11 6-11 6z"/></svg></span>Horns</button>
+    <button class="row" data-a="unl_anim"><span class="ico" style="background:#be123c"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>Animations</button>
+    <button class="row" data-a="unl_houses"><span class="ico" style="background:#163a8c"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg></span>All houses</button>
+    <button class="row" data-a="unl_wheels"><span class="ico" style="background:#44403c"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></span>Wheels</button>
+    <button class="row" data-a="unl_levels"><span class="ico" style="background:#a16207"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v8a5 5 0 0 1-10 0V4z"/></svg></span>Complete levels</button>
+    <button class="row" data-a="unl_clothes"><span class="ico" style="background:#6b21a8"><svg viewBox="0 0 24 24"><path d="M20 7 16 3H8L4 7l4 2v12h8V9l4-2z"/></svg></span>All clothes</button>
+    <button class="row" data-a="unl_all"><span class="ico" style="background:#2f6fed"><svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></span>Execute all unlocks</button>
+
+    <div class="sec">Vehicles</div>
+    <button class="row" data-a="veh_all"><span class="ico" style="background:#0f2a66"><svg viewBox="0 0 24 24"><path d="M5 17h14v-5l-2-5H7L5 12v5z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg></span>Unlock all cars</button>
+    <button class="row" data-a="veh_one"><span class="ico" style="background:#0f2a66"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="2"/><path d="M10 15h6l2-4H9l1 4z"/></svg></span>Unlock single car</button>
+    <button class="row" data-a="veh_w124"><span class="ico" style="background:#163a8c"><svg viewBox="0 0 24 24"><path d="M5 17h14v-5l-2-5H7L5 12v5z"/></svg></span>Unlock W124</button>
+    <button class="row" data-a="veh_camry"><span class="ico" style="background:#1a4db8"><svg viewBox="0 0 24 24"><path d="M5 17h14v-5l-2-5H7L5 12v5z"/></svg></span>Unlock Camry</button>
+    <button class="row" data-a="veh_siren"><span class="ico" style="background:#9f1239"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M5 12H2M22 12h-3M6 6l-2-2M20 20l-2-2M6 18l-2 2M20 4l-2 2"/><circle cx="12" cy="12" r="4"/></svg></span>Siren all cars</button>
+    <button class="row" data-a="veh_siren_one"><span class="ico" style="background:#be123c"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/></svg></span>Siren one car</button>
+
+    <div class="sec">Bumper</div>
+    <button class="row" data-a="bump_one"><span class="ico" style="background:#c2410c"><svg viewBox="0 0 24 24"><path d="M4 14h16v3H4zM7 10h10l1 4H6l1-4z"/></svg></span>Remove bumper</button>
+    <button class="row" data-a="bump_all"><span class="ico" style="background:#ea580c"><svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h18"/></svg></span>Remove bumper all cars</button>
+
+
+
+    <div class="sec">Vinyl & Cars</div>
+    <button class="row" data-a="vinyl_one"><span class="ico" style="background:#0f766e"><svg viewBox="0 0 24 24"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg></span>Transfer vinyl — one car</button>
+    <button class="row" data-a="vinyl_all"><span class="ico" style="background:#0d9488"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Transfer vinyl — all matching cars</button>
+    <button class="row" data-a="car_one"><span class="ico" style="background:#1a4db8"><svg viewBox="0 0 24 24"><path d="M5 17h14v-5l-2-5H7L5 12v5z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg></span>Clone single car</button>
+    <button class="row" data-a="car_all"><span class="ico" style="background:#163a8c"><svg viewBox="0 0 24 24"><path d="M3 17h18v-5l-2-5H5L3 12v5z"/></svg></span>Clone cars (all)</button>
+    <button class="row" data-a="plate_copy"><span class="ico" style="background:#115e59"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="10" rx="2"/><path d="M7 12h10M7 15h6"/></svg></span>Copy plates (from account)</button>
+
+    <div class="sec">Plates</div>
+    <button class="row" data-a="plate_inject"><span class="ico" style="background:#134e4a"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="10" rx="2"/><path d="M7 12h10"/></svg></span>Inject plates</button>
+
+    
+    <div class="sec">Clone</div>
+    <button class="row" data-a="clone_one"><span class="ico" style="background:#163a8c"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a5 5 0 0 1 10 0v1"/><circle cx="17" cy="9" r="2.5"/><path d="M21 20v-.5a4 4 0 0 0-5-3.9"/></svg></span>Clone account</button>
+    <button class="row" data-a="clone_bulk"><span class="ico" style="background:#1a4db8"><svg viewBox="0 0 24 24"><path d="M16 16v-4a4 4 0 0 0-8 0v4"/><rect x="4" y="16" width="16" height="5" rx="1"/></svg></span>Bulk clone (max 300)</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3 id="mTitle">Input</h3>
+    <p id="mHint" style="color:var(--muted);font-size:.85rem"></p>
+    <input id="mIn1" placeholder=""/>
+    <input id="mIn2" placeholder="" style="display:none"/>
+    <input id="mIn3" placeholder="" style="display:none"/>
+    <select id="mBumper" style="display:none"></select>
+    <div class="progress" id="mProg" style="display:none"><i id="mBar"></i></div>
+    <p id="mStatus" style="font-size:.8rem;color:var(--muted)"></p>
+    <button class="btn" id="mOk">OK</button>
+    <button class="btn sec" id="mCancel">Cancel</button>
+  </div>
+</div>
+<div class="modal-bg" id="plans">
+  <div class="modal">
+    <h3>Plans</h3>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:10px">Contact admin after selecting. Your Telegram ID is required.</p>
+    <div id="planList"></div>
+    <button class="btn sec" id="planClose">Close</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) { try { tg.ready(); tg.expand(); tg.setHeaderColor('#0a0c12'); tg.setBackgroundColor('#0a0c12'); } catch(e){} }
+let TG={}, SUB={active:false}, initData='', CPM_OK=false;
+
+
+let _progHidden=false;
+function showCloneProgress(){
+  _progHidden=false;
+  const m=document.getElementById('cloneProg');
+  const mini=document.getElementById('cloneMini');
+  if(m) m.classList.add('show');
+  if(mini) mini.classList.remove('show');
+  setCloneProgress(0,'Starting…\nETA finish: —');
+}
+function hideCloneProgress(delay){
+  setTimeout(()=>{
+    const m=document.getElementById('cloneProg');
+    const mini=document.getElementById('cloneMini');
+    if(m) m.classList.remove('show');
+    if(mini) mini.classList.remove('show');
+    _progHidden=false;
+  }, delay||800);
+}
+function setCloneProgress(pct,msg,done,total){
+  let pnum=parseInt(pct,10);
+  if(isNaN(pnum)) pnum=0;
+  if((!pnum || pnum<1) && done!=null && total){
+    pnum=Math.round(100*Number(done)/Math.max(1,Number(total)));
+  }
+  pnum=Math.max(0,Math.min(100,pnum));
+  const p=document.getElementById('clonePct');
+  const b=document.getElementById('cloneBar');
+  const m=document.getElementById('cloneMsg');
+  if(p) p.textContent=pnum+'%';
+  if(b){ b.style.width=pnum+'%'; b.style.display='block'; }
+  let text=msg!=null?String(msg):'';
+  if(done!=null && total!=null){
+    text = (text?text+'\n':'') + ('Accounts: '+done+'/'+total);
+  }
+  if(m){
+    m.style.whiteSpace='pre-line';
+    if(text) m.textContent=text;
+  }
+  const mp=document.getElementById('miniPct');
+  const mb=document.getElementById('miniBar');
+  const me=document.getElementById('miniEta');
+  if(mp) mp.textContent=pnum+'%';
+  if(mb){ mb.style.width=pnum+'%'; mb.style.display='block'; }
+  if(me){
+    const etaLine=String(text||'').split('\n').find(l=>/ETA finish|Finish around/i.test(l));
+    me.textContent=etaLine||('Progress '+pnum+'%');
+  }
+}
+async function pollJob(jobId){
+  if(!jobId) return null;
+  showCloneProgress();
+  setCloneProgress(1,'Starting job…');
+  let last=null;
+  for(let i=0;i<1200;i++){
+    try{
+      const r=await fetch('/api/job/'+encodeURIComponent(jobId)+'?_='+Date.now(), {cache:'no-store'});
+      const j=await r.json();
+      last=j;
+      if(j && j.ok){
+        let pct=Number(j.percent)||0;
+        if((!pct || pct<1) && j.done!=null && j.total){
+          pct=Math.round(100*Number(j.done)/Math.max(1,Number(j.total)));
+        }
+        setCloneProgress(pct, j.message||'Working…', j.done, j.total);
+        if(j.status==='done'||j.status==='error'){
+          setCloneProgress(100, j.message|| (j.status==='done'?'Done':'Error'), j.done, j.total);
+          hideCloneProgress(j.status==='done'?1500:2500);
+          toast(j.message||j.status);
+          return j;
+        }
+      } else if(j && j.error==='job_not_found' && i>5){
+        setCloneProgress(0, 'Job not found — check Telegram for result');
+      }
+    }catch(e){}
+    await new Promise(res=>setTimeout(res,450));
+  }
+  setCloneProgress(100,'Timeout — check Telegram for result');
+  hideCloneProgress(2000);
+  return last;
+}
+document.addEventListener('click',function(ev){
+  if(ev.target && ev.target.id==='btnHideProg'){
+    _progHidden=true;
+    const m=document.getElementById('cloneProg');
+    const mini=document.getElementById('cloneMini');
+    if(m) m.classList.remove('show');
+    if(mini) mini.classList.add('show');
+    toast('Progress hidden — you can use other features');
+  }
+  if(ev.target && ev.target.id==='btnShowProg'){
+    _progHidden=false;
+    const m=document.getElementById('cloneProg');
+    const mini=document.getElementById('cloneMini');
+    if(mini) mini.classList.remove('show');
+    if(m) m.classList.add('show');
+  }
+});
+
+function toast(m){ const e=document.getElementById('toast'); e.textContent=m; e.style.display='block'; setTimeout(()=>e.style.display='none',2400); }
+function tgPayload(){
+  initData = (tg && tg.initData) || '';
+  const b = { initData };
+  if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    const u = tg.initDataUnsafe.user;
+    b.tg_id=u.id; b.username=u.username; b.first_name=u.first_name; b.last_name=u.last_name; b.photo_url=u.photo_url;
+  }
+  return b;
+}
+
+async function api(path, body){
+  const res = await fetch(path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ...tgPayload(), ...body }) });
+  return res.json();
+}
+
+function promptModal(title, hint, fields, onOk){
+  const m=document.getElementById('modal');
+  document.getElementById('mTitle').textContent=title;
+  document.getElementById('mHint').textContent=hint||'';
+  const inputs=[document.getElementById('mIn1'),document.getElementById('mIn2'),document.getElementById('mIn3')];
+  const bumper=document.getElementById('mBumper');
+  inputs.forEach((input,index)=>{ input.style.display=fields[index]?'block':'none'; input.value=''; input.placeholder=fields[index]||''; });
+  bumper.style.display='none';
+  document.getElementById('mProg').style.display='none';
+  document.getElementById('mStatus').textContent='';
+  m.classList.add('show');
+  document.getElementById('mOk').onclick=()=>{ onOk(...inputs.slice(0,fields.length).map(input=>input.value.trim())); };
+  document.getElementById('mCancel').onclick=()=>m.classList.remove('show');
+}
+function bumperAction(scope, part){
+  const side=part==='front'?'front':part==='rear'?'rear':'both';
+  return 'bump_'+side+(scope==='all'?'_all':'');
+}
+function promptBumperModal(title, hint, needsCar, onOk){
+  const m=document.getElementById('modal');
+  document.getElementById('mTitle').textContent=title;
+  document.getElementById('mHint').textContent=hint||'';
+  const in1=document.getElementById('mIn1');
+  const in2=document.getElementById('mIn2');
+  const in3=document.getElementById('mIn3');
+  in2.style.display='none'; in2.value='';
+  in3.style.display='none'; in3.value='';
+  if(needsCar){
+    in1.style.display='block';
+    in1.style.visibility='visible';
+    in1.value='';
+    in1.placeholder='Car ID (example: 5)';
+    in1.setAttribute('inputmode','numeric');
+  } else {
+    in1.style.display='none';
+    in1.value='';
+  }
+  const select=document.getElementById('mBumper');
+  select.innerHTML='<option value="front">Front bumper</option><option value="rear">Rear bumper</option><option value="both">Front + rear bumpers</option>';
+  select.style.display='block';
+  select.value='front';
+  document.getElementById('mProg').style.display='none';
+  document.getElementById('mStatus').textContent=needsCar?'Type the Car ID first, then choose bumper side.':'';
+  m.classList.add('show');
+  if(needsCar){ setTimeout(()=>in1.focus(), 100); }
+  document.getElementById('mOk').onclick=()=>{
+    const cid=in1.value.trim();
+    if(needsCar){
+      if(!cid){ toast('Enter Car ID'); in1.focus(); return; }
+      if(!/^\d+$/.test(cid)){ toast('Car ID must be numbers only'); in1.focus(); return; }
+    }
+    onOk(cid, select.value);
+  };
+  document.getElementById('mCancel').onclick=()=>m.classList.remove('show');
+}
+function renderCpmTaggedText(element, value){
+  const text=String(value||'—');
+  element.replaceChildren();
+  let color='';
+  for(const part of text.split(/(\[[0-9a-fA-F]{6}\])/g)){
+    const tag=part.match(/^\[([0-9a-fA-F]{6})\]$/);
+    if(tag){color='#'+tag[1];continue;}
+    if(!part) continue;
+    if(color){
+      const span=document.createElement('span');
+      span.style.color=color;
+      span.textContent=part;
+      element.appendChild(span);
+    }else element.appendChild(document.createTextNode(part));
+  }
+}
+
+async function load(){
+  const me = await api('/api/me', {});
+  if(!me.ok){ toast('Open from Telegram bot'); return; }
+  TG = me.user; SUB = me.subscription||{};
+  document.getElementById('tgName').textContent=[TG.first_name,TG.last_name].filter(Boolean).join(' ')||'User';
+  document.getElementById('tgUser').textContent=TG.username?('@'+TG.username):'—';
+  document.getElementById('tgId').textContent=TG.id;
+  const sl=document.getElementById('subLine');
+  if(SUB.active){ sl.textContent='Subscription · '+(SUB.plan_label||SUB.plan)+' · '+(SUB.remaining||''); sl.className='subline ok'; }
+  else { sl.textContent='No active subscription'; sl.className='subline no'; }
+  const av=document.getElementById('av');
+  if(TG.photo_url) av.innerHTML='<img src="'+TG.photo_url+'" alt=""/>';
+  else av.textContent=(TG.first_name||'U').charAt(0).toUpperCase();
+
+  if(me.is_admin){ SUB.active=true; SUB.plan_label='Admin'; SUB.remaining='Unlimited'; }
+  if(SUB.active){
+    document.getElementById('lock').style.display='none';
+    document.getElementById('menu').classList.remove('locked');
+  } else {
+    document.getElementById('lock').style.display='block';
+    document.getElementById('menu').classList.add('locked');
+  }
+  if(me.is_admin){
+    const sl=document.getElementById('subLine');
+    if(sl){ sl.textContent='Admin · full access · no subscription needed'; sl.className='subline ok'; }
+  }
+
+  const sess = await fetch('/api/cpm_session?tg_id='+encodeURIComponent(TG.id)).then(r=>r.json());
+  if(!sess.ok){ location.href='/login'; return; }
+  CPM_OK=true;
+  document.getElementById('cpmEmail').textContent=sess.email||'—';
+  if(sess.profile){
+    renderCpmTaggedText(document.getElementById('cpmName'),sess.profile.name||'—');
+    renderCpmTaggedText(document.getElementById('cpmId'),sess.profile.player_id||sess.profile.localID||'—');
+    document.getElementById('cpmMoney').textContent=sess.profile.money!=null?Number(sess.profile.money).toLocaleString():'—';
+    document.getElementById('cpmCoin').textContent=sess.profile.coin!=null?Number(sess.profile.coin).toLocaleString():'—';
+  }
+  const plans=await fetch('/api/plans').then(r=>r.json());
+  const box=document.getElementById('planList'); box.innerHTML='';
+  const pay=plans.payment||{};
+  (plans.plans||[]).forEach(p=>{
+    const row=document.createElement('div'); row.className='plan-row';
+    row.innerHTML='<div class="title">'+p.label+'</div><div class="prices"></div>';
+    const prices=row.querySelector('.prices');
+    const bs=document.createElement('button'); bs.className='btn-stars';
+    bs.textContent=(p.stars||0)+' Stars ★';
+    bs.onclick=async()=>{
+      toast('Opening Stars invoice…');
+      const r=await api('/api/buy_stars',{plan:p.key});
+      toast(r.message||r.error||'Check bot chat for invoice');
+    };
+    const bm=document.createElement('button'); bm.className='btn-money';
+    bm.textContent='Money '+(p.money_label||('$'+(p.money||'')));
+    bm.onclick=async()=>{
+      const r=await api('/api/buy_money',{plan:p.key});
+      let msg=r.message||r.error||'OK';
+      if(r.instructions) msg+=' · '+r.instructions;
+      toast(msg);
+    };
+    prices.appendChild(bs); prices.appendChild(bm);
+    box.appendChild(row);
+  });
+  const info=document.createElement('div'); info.className='pay-info';
+  const bits=[];
+  if(pay.gcash) bits.push('GCash: '+pay.gcash);
+  if(pay.paypal) bits.push('PayPal: '+pay.paypal);
+  if(pay.other) bits.push(pay.other);
+  info.textContent = bits.length ? ('Pay details: '+bits.join(' · ')) : 'Stars = instant. Money = pay then admin activates.';
+  box.appendChild(info);
+}
+
+async function runAction(a){
+  if(!SUB.active){ toast('Subscription required'); return; }
+  if(!CPM_OK){ location.href='/login'; return; }
+
+  if(a==='acc_name') return promptModal('Change name','New player name',['Name'], async (v)=>{ document.getElementById('modal').classList.remove('show'); toast((await api('/api/action',{action:a,value:v})).message||'OK'); load(); });
+  if(a==='acc_rainbow_name') return promptModal('Rainbow Name','Enter the name to color per character in CPM and show in rainbow colors here. Max 20 visible characters.',['Name'], async (v)=>{
+    document.getElementById('modal').classList.remove('show');
+    if(!v){toast('Name is required');return;}
+    const r=await api('/api/action',{action:a,value:v});
+    toast(r.message||r.error||'Done');
+    if(r.ok) load();
+  });
+  if(a==='acc_custom_rainbow_name') return promptModal('Custom Rainbow Name','Enter the name text. The built-in rainbow colors repeat across its characters.',['Name'], async (name)=>{
+    document.getElementById('modal').classList.remove('show');
+    const r=await api('/api/action',{action:a,value:name});
+    toast(r.message||r.error||'Done');
+    if(r.ok) load();
+  });
+  if(a==='acc_id') return promptModal('Change ID','New CPM ID',['ID'], async (v)=>{ document.getElementById('modal').classList.remove('show'); toast((await api('/api/action',{action:a,value:v})).message||'OK'); load(); });
+  if(a==='acc_rainbow_id'){
+    const r=await api('/api/action',{action:a});
+    toast(r.message||r.error||'Done');
+    if(r.ok) load();
+    return;
+  }
+  if(a==='acc_custom_rainbow_id') return promptModal('Custom Rainbow ID','Enter the ID text to save with the built-in rainbow colors.',['ID'], async (id)=>{
+    document.getElementById('modal').classList.remove('show');
+    const r=await api('/api/action',{action:a,value:id});
+    toast(r.message||r.error||'Done');
+    if(r.ok) load();
+  });
+  if(a==='acc_email') return promptModal('Change email','New email',['Email'], async (v)=>{ document.getElementById('modal').classList.remove('show'); toast((await api('/api/action',{action:a,value:v})).message||'OK'); });
+  if(a==='acc_pass') return promptModal('Change password','New password',['Password'], async (v)=>{ document.getElementById('modal').classList.remove('show'); toast((await api('/api/action',{action:a,value:v})).message||'OK'); });
+  if(a==='eco_money_c') return promptModal('Custom money','Amount (max 50M)',['Amount'], async (v)=>{ document.getElementById('modal').classList.remove('show'); toast((await api('/api/action',{action:a,value:v})).message||'OK'); load(); });
+  if(a==='eco_coin_c') return promptModal('Custom coins','Amount (max 500K)',['Amount'], async (v)=>{ document.getElementById('modal').classList.remove('show'); toast((await api('/api/action',{action:a,value:v})).message||'OK'); load(); });
+  if(a==='veh_one') return promptModal('Unlock car','Car ID',['Car ID'], async (v)=>{ document.getElementById('modal').classList.remove('show'); toast((await api('/api/action',{action:a,value:v})).message||'OK'); });
+  if(a==='veh_siren_one') return promptModal('Siren one car','Car ID',['Car ID'], async (v)=>{ document.getElementById('modal').classList.remove('show'); toast((await api('/api/action',{action:a,value:v})).message||'OK'); });
+if(a==='vinyl_one') return promptModal('Transfer vinyl — one car','Source email:password · Target email:password · Car ID (same car on both accounts). Target must already own that car.',['Source email:password','Target email:password','Car ID'], async (source,target,cid)=>{
+    if(!source||!source.includes(':')){ toast('Source must be email:password'); return; }
+    if(!target||!target.includes(':')){ toast('Target must be email:password'); return; }
+    if(!cid||!/^\d+$/.test(cid.trim())){ toast('Enter numeric Car ID'); return; }
+    document.getElementById('modal').classList.remove('show');
+    toast('Vinyl transfer running…');
+    const r=await api('/api/action',{action:'vinyl_one',value:source+'|'+target+'|'+cid.trim()});
+    toast(r.message||r.error||'OK');
+  });
+  if(a==='vinyl_all') return promptModal('Transfer vinyl — all matching cars','Enter source and target email:password. Only cars with matching IDs on both accounts are copied.',['Source email:password','Target email:password'], async (source,target)=>{
+    document.getElementById('modal').classList.remove('show');
+    toast('Vinyl all running…');
+    const r=await api('/api/action',{action:'vinyl_all',value:source+'|'+target});
+    toast(r.message||r.error||'OK');
+  });
+  if(a==='car_one') return promptModal('Clone single car','Source email:password · Target email:password · Car ID from source garage.',['Source email:password','Target email:password','Car ID'], async (s,t,cid)=>{
+    if(!s||!s.includes(':')){ toast('Source must be email:password'); return; }
+    if(!t||!t.includes(':')){ toast('Target must be email:password'); return; }
+    if(!cid||!/^\d+$/.test(cid.trim())){ toast('Enter numeric Car ID'); return; }
+    document.getElementById('modal').classList.remove('show');
+    toast('Clone car running…');
+    const r=await api('/api/action',{action:'car_one',value:s+'|'+t+'|'+cid.trim()});
+    toast(r.message||r.error||'OK');
+  });
+  if(a==='car_all') return promptModal('Clone all cars','Enter source and target email:password. All source cars are copied to the target account.',['Source email:password','Target email:password'], async (s,t)=>{
+    document.getElementById('modal').classList.remove('show');
+    toast('Clone cars running…');
+    const r=await api('/api/action',{action:'car_all',value:s+'|'+t});
+    toast(r.message||r.error||'OK');
+  });
+  if(a==='plate_copy') return promptModal('Copy plates','Enter source and target email:password. Source plates are copied to the target account.',['Source email:password','Target email:password'], async (s,t)=>{
+    document.getElementById('modal').classList.remove('show');
+    toast('Copy plates running…');
+    const r=await api('/api/action',{action:'plate_copy',value:s+'|'+t});
+    toast(r.message||r.error||'OK');
+  });
+
+  if(a==='clone_one') return promptModal('Clone account','Copies money, coin, clothes, cars, rank, unlocks (not friends/ID)',['source@mail:pass','target@mail:pass'], async (s,t)=>{
+    document.getElementById('modal').classList.remove('show');
+    const sp=s.split(':'), tp=t.split(':');
+    const r=await api('/api/clone',{src_email:sp[0],src_pass:sp.slice(1).join(':'),tgt_email:tp[0],tgt_pass:tp.slice(1).join(':')});
+    if(r.job_id){ const j=await pollJob(r.job_id); toast((j&&j.message)||r.message||'Done'); }
+    else toast(r.message||r.error||'OK');
+  });
+  if(a==='clone_bulk') return promptModal('Bulk clone','Source email:password + count. Copies money coin clothes cars rank unlocks. 30 workers. You can HIDE progress and keep using the app.',['source@mail:pass','50'], async (s,n)=>{
+    document.getElementById('modal').classList.remove('show');
+    const sp=s.split(':');
+    const r=await api('/api/bulk_clone',{src_email:sp[0],src_pass:sp.slice(1).join(':'),count:parseInt(n||'1',10)||1});
+    if(r.job_id){ const j=await pollJob(r.job_id); toast((j&&j.message)||r.message||'Done'); }
+    else toast(r.message||r.error||'OK');
+  });
+
+
+
+  if(a==='bump_one') return promptBumperModal('Remove bumper — one car','Enter Car ID, then choose Front / Rear / Both.',true, async (cid,part)=>{
+    if(!cid||!/^\d+$/.test(String(cid).trim())){ toast('Car ID required'); return; }
+    document.getElementById('modal').classList.remove('show');
+    toast('Removing '+part+' bumper on car '+cid+'…');
+    const r=await api('/api/action',{action:bumperAction('one',part),value:String(cid).trim()});
+    toast(r.message||r.error||'Bumper job started');
+  });
+  if(a==='bump_all') return promptBumperModal('Remove bumper — all cars','Choose Front, Rear, or Both for every car.',false, async (_cid,part)=>{
+    document.getElementById('modal').classList.remove('show');
+    toast('Removing '+part+' bumper from all cars…');
+    const r=await api('/api/action',{action:bumperAction('all',part)});
+    toast(r.message||r.error||'Bumper job started');
+  });
+  toast('Running…');
+  const r=await api('/api/action',{action:a});
+  toast(r.message||r.error||'Done');
+  if(['eco_money','eco_coin','acc_rank','acc_refresh'].includes(a)) load();
+}
+
+document.getElementById('menu').addEventListener('click', e=>{
+  const btn=e.target.closest('[data-a]'); if(!btn) return;
+  runAction(btn.getAttribute('data-a'));
+});
+document.getElementById('btnOut').onclick=async()=>{ await api('/api/cpm_logout',{}); location.href='/login'; };
+document.getElementById('planClose').onclick=()=>document.getElementById('plans').classList.remove('show');
+
+document.getElementById('btnSub') && (document.getElementById('btnSub').onclick = async ()=>{
+  const box=document.getElementById('planList');
+  const info=document.getElementById('gcashInfo');
+  try{
+    const plans=await fetch('/api/plans').then(r=>r.json());
+    const pay=plans.payment||{};
+    if(info) info.innerHTML='GCash name: <b>'+(pay.name||'—')+'</b><br>Number: <b>'+(pay.gcash||'—')+'</b><br>'+(pay.note||'Pay then send receipt photo in the bot.');
+    if(box){
+      box.innerHTML='';
+      (plans.plans||[]).forEach(p=>{
+        const row=document.createElement('div'); row.className='plan-row';
+        row.innerHTML='<div class="title">'+p.label+' — <b>'+(p.money_label||'')+'</b></div>';
+        const btn=document.createElement('button');
+        btn.className='btn-money'; btn.style.width='100%'; btn.style.marginTop='8px';
+        btn.textContent='Select & send receipt';
+        btn.onclick=async()=>{
+          const r=await api('/api/select_plan',{plan:p.key});
+          toast(r.message||r.error||'OK');
+        };
+        row.appendChild(btn); box.appendChild(row);
+      });
+    }
+  }catch(e){ toast(String(e)); }
+  document.getElementById('plans').classList.add('show');
+});
+document.getElementById('planClose') && (document.getElementById('planClose').onclick=()=>document.getElementById('plans').classList.remove('show'));
+
+load().catch(e=>toast(String(e)));
+</script>
+
+<div class="prog-modal" id="cloneProg">
+  <div class="prog-card">
+    <h3>CLONING PROGRESS</h3>
+    <div class="prog-pct" id="clonePct">0%</div>
+    <div class="prog-bar"><i id="cloneBar"></i></div>
+    <div class="prog-msg" id="cloneMsg" style="white-space:pre-line;text-align:left">CLONING PROGRESS
+
+Starting…
+ETA finish: —</div>
+    <div class="prog-actions">
+      <button type="button" class="prog-hide" id="btnHideProg">HIDE — keep using app</button>
+    </div>
+  </div>
+</div>
+<div class="prog-mini" id="cloneMini">
+  <div class="row">
+    <span class="pct" id="miniPct">0%</span>
+    <span class="eta" id="miniEta">ETA —</span>
+    <button type="button" class="prog-hide" id="btnShowProg" style="flex:0;padding:6px 10px;font-size:.75rem">SHOW</button>
+  </div>
+  <div class="bar"><i id="miniBar"></i></div>
+</div>
+
+</body>
+</html>
